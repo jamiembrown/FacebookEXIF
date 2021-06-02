@@ -24,10 +24,18 @@ if PATH_TO_FACEBOOK_EXPORT.endswith('/'):
 
 if not os.path.exists(PATH_TO_FACEBOOK_EXPORT):
     print("Facebook export does not exist at %s" % (PATH_TO_FACEBOOK_EXPORT))
+    print("")
+    print("Please edit the script to point PATH_TO_FACEBOOK_EXPORT to the location of your unzipped Facebook export.")
+    print("")
     exit()
 
 if not os.path.exists(PATH_TO_EXIFTOOL):
     print("exiftool was not found at %s" % (PATH_TO_EXIFTOOL))
+    print("")
+    print("Please install exiftool from https://exiftool.org/ before running this.")
+    print("If you have installed exiftool then update PATH_TO_EXIFTOOL in the script to point to the correct location.")
+    print("(Tip: try \"which exiftool\" to find out where it is.)")
+    print("")
     exit()
 
 if not os.path.exists(PATH_TO_FACEBOOK_EXPORT + '/photos_and_videos'):
@@ -60,17 +68,29 @@ if len(post_files) == 0:
 
 photos = {}
 
-# Loop through all posts in the Facebook data
+# Loop through all posts in the Facebook data to extract photos and properties
 
 for post_file in post_files:
+
+    # Is this a JSON file?
+
     full_path = PATH_TO_FACEBOOK_EXPORT + '/posts/' + post_file
     if not post_file.endswith('.json') or not os.path.isfile(full_path):
         continue
+
+    # Open it and convert it to a JSON object
+
     with open(full_path) as file_content:
         data = json.load(file_content)
+
+        # Loop through each post
+
         for post in data:
             if 'attachments' not in post:
                 continue
+
+            # Extract photos in the current post
+
             matched_media = []
             for attachment in post['attachments']:
                 for attachment_data in attachment['data']:
@@ -78,31 +98,51 @@ for post_file in post_files:
                         if attachment_data['media']['uri'] not in photos:
                             photos[attachment_data['media']['uri']] = attachment_data['media']
                         matched_media.append(attachment_data['media']['uri'])
+
+            # Extract geographic info from the current post and attach to photos
+
             for attachment in post['attachments']:
                 for attachment_data in attachment['data']:
                     if 'place' in attachment_data:
                         for matched_media_item in matched_media:
                             photos[matched_media_item]['place'] = attachment_data['place']
 
-# Loop through all photos in the Facebook albums
+# Loop through all entries in the Facebook albums to extract photos and properties
 
 for album_file in album_files:
+
+    # Is this a JSON file?
+
     full_path = PATH_TO_FACEBOOK_EXPORT + '/posts/album/' + album_file
     if not album_file.endswith('.json') or not os.path.isfile(full_path):
         continue
+
+    # Open it and convert to a JSON object
+
     with open(full_path) as file_content:
         data = json.load(file_content)
+
+        # Extract photos from the current album
+
         album_name = data['name']
         for album_photo in data['photos']:
             if album_photo['uri'] not in photos:
                 photos[album_photo['uri']] = album_photo
+
+            # Tag photo with the album name
+
             if 'albums' not in photos[album_photo['uri']]:
                 photos[album_photo['uri']]['albums'] = []
             if album_name not in photos[album_photo['uri']]['albums']:
                 photos[album_photo['uri']]['albums'].append(album_name)
 
+# Did we get anything? If not, it's probably not a JSON export
+
 if len(photos) == 0:
-    print("No photos found in Facebook export")
+    print("No photos found in Facebook export.")
+    print("")
+    print("Are you sure this is a JSON export? Make sure you selected JSON format when creating your Facebook download - the default is HTML and is not supported by this script.")
+    print("")
     exit()
 
 # We've got a list of photos now, let's loop through them and add EXIF
@@ -160,20 +200,24 @@ for photo_uri in photos:
 
     # Generate the full exiftool command
 
-    command = ' '.join(params)
-    full_command = PATH_TO_EXIFTOOL + ' ' + command + ' -overwrite_original ' + PATH_TO_FACEBOOK_EXPORT + '/' + photo_uri
+    command = PATH_TO_EXIFTOOL + ' ' + ' '.join(params) + ' -overwrite_original ' + PATH_TO_FACEBOOK_EXPORT + '/' + photo_uri
 
     # Launch exiftool and wait
 
-    process = subprocess.Popen(full_command, shell=True, stdout=subprocess.PIPE)
+    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
     process.wait()
 
     # If the process returned a non-zero response (i.e. an error) break
 
     if process.returncode != 0:
-        print("ERROR returned by exiftool")
+        print("ERROR returned by exiftool for %s" % (photo_uri))
         exit()
 
     print("Added EXIF for %s" % (photo_uri))
 
+# We're all done!
+
+print("")
 print("Completed %d photos" % (len(photos)))
+print("Your EXIF tagged photos are in %s" % (PATH_TO_FACEBOOK_EXPORT + '/photos_and_videos/'))
+print("Have a nice day!")
