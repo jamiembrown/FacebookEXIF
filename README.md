@@ -1,5 +1,5 @@
 # FacebookEXIF
-Puts the EXIF data back into photos exported from Facebook - including description, location and most importantly, date taken. To get started, you'll first need to [download your Facebook data in JSON format]([https://www.facebook.com/help/1701730696756992).
+Puts the EXIF data back into photos exported from Facebook - including description, location and most importantly, date taken. To get started, you'll first need to [download your Facebook data in JSON format](https://www.facebook.com/help/1701730696756992).
 
 This is inspired by the excellent project over at [AddShore](https://addshore.com/2020/04/add-exif-data-back-to-facebook-images-0-10/), but that didn't seem to work on my Mac, so I wrote a clone in Python.
 
