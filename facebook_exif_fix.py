@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 import subprocess
 
-PATH_TO_FACEBOOK_EXPORT = '/path/to/your/facebook/json/download'
+PATH_TO_FACEBOOK_EXPORT = '/Users/jamesbrown/Downloads/facebook-jamesbrown'
 PATH_TO_EXIFTOOL = '/usr/local/bin/exiftool'
 
 # Basic checks on the input
@@ -105,9 +105,9 @@ for photo_uri in photos:
 
     if 'place' in photo and 'coordinate' in photo['place'] and 'latitude' in photo['place']['coordinate']:
         params.append('-gpslatitude="' + str(photo['place']['coordinate']['latitude']) + '"')
-        params.append('-gpslatituderef="N"')
+        params.append('-gpslatituderef="' + str(photo['place']['coordinate']['latitude']) + '"')
         params.append('-gpslongitude="' + str(photo['place']['coordinate']['longitude']) + '"')
-        params.append('-gpslongituderef="W"')
+        params.append('-gpslongituderef="' + str(photo['place']['coordinate']['longitude']) + '"')
 
     if 'description' in photo:
         params.append('-ImageDescription="' + photo['description'].replace('"', '') + '"')
